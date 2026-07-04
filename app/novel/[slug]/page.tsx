@@ -15,7 +15,7 @@ import { LibraryButton } from "@/components/library-button";
 import { ChapterList } from "@/components/chapter-list";
 import { RatingForm } from "@/components/rating-form";
 import { ReviewList } from "@/components/review-list";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, genreColorClass, coverGradient } from "@/lib/utils";
 
 type Params = Promise<{ slug: string }>;
 
@@ -77,7 +77,10 @@ export default async function NovelDetailPage({ params }: { params: Params }) {
                 className="object-cover"
               />
             ) : (
-              <div className="flex h-full items-center justify-center px-3 text-center text-sm text-text-muted">
+              <div
+                className="flex h-full items-center justify-center px-3 text-center text-sm font-semibold text-white"
+                style={{ backgroundImage: coverGradient(novel.slug) }}
+              >
                 {novel.title}
               </div>
             )}
@@ -103,7 +106,7 @@ export default async function NovelDetailPage({ params }: { params: Params }) {
           {firstChapter && (
             <Link
               href={`/novel/${novel.slug}/${continueChapter?.chapter_number ?? firstChapter.chapter_number}`}
-              className="rounded-lg bg-accent px-4 py-2.5 text-center font-medium text-white hover:bg-accent-hover"
+              className="gradient-accent rounded-lg px-4 py-2.5 text-center font-medium text-white shadow-sm transition hover:opacity-90 hover:shadow-md"
             >
               {continueChapter ? "Đọc tiếp" : "Đọc từ đầu"}
             </Link>
@@ -144,7 +147,7 @@ export default async function NovelDetailPage({ params }: { params: Params }) {
               <Link
                 key={g.id}
                 href={`/browse?genre=${g.slug}`}
-                className="rounded-full bg-surface px-3 py-1 text-xs text-text-muted hover:text-text"
+                className={`rounded-full px-3 py-1 text-xs font-medium transition hover:opacity-80 ${genreColorClass(g.id)}`}
               >
                 {g.name}
               </Link>

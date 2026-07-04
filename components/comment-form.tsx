@@ -33,7 +33,7 @@ export function CommentForm({
         placeholder="Viết bình luận về chương này..."
         className="resize-none rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm text-text outline-none focus:border-accent"
       />
-      {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {state?.error && <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>}
       <button
         type="submit"
         disabled={pending}

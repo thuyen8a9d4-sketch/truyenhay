@@ -65,7 +65,7 @@ export function NavUserMenu({ profile }: { profile: Profile }) {
           <form action={signOut}>
             <button
               type="submit"
-              className="block w-full border-t border-border px-4 py-2.5 text-left text-sm text-red-400 hover:bg-surface-hover"
+              className="block w-full border-t border-border px-4 py-2.5 text-left text-sm text-red-600 hover:bg-surface-hover dark:text-red-400"
             >
               Đăng xuất
             </button>

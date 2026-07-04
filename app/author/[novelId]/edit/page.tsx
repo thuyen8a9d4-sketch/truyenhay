@@ -57,7 +57,7 @@ export default async function EditNovelPage({ params }: { params: Params }) {
       <form action={deleteAction} className="mt-6">
         <ConfirmSubmitButton
           confirmMessage="Xoá truyện này? Toàn bộ chương, bình luận và đánh giá sẽ bị xoá vĩnh viễn."
-          className="rounded-lg border border-red-500/40 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10"
+          className="rounded-lg border border-red-500/40 px-4 py-2.5 text-sm text-red-600 hover:bg-red-500/10 dark:text-red-400"
         >
           Xoá truyện
         </ConfirmSubmitButton>

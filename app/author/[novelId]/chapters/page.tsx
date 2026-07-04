@@ -73,7 +73,7 @@ export default async function ManageChaptersPage({ params }: { params: Params })
                 <form action={deleteChapter.bind(null, c.id, novelId, novel.slug)}>
                   <ConfirmSubmitButton
                     confirmMessage="Xoá chương này?"
-                    className="rounded-lg border border-red-500/40 px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/10"
+                    className="rounded-lg border border-red-500/40 px-3 py-1.5 text-sm text-red-600 hover:bg-red-500/10 dark:text-red-400"
                   >
                     Xoá
                   </ConfirmSubmitButton>

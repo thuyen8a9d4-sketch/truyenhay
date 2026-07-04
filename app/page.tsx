@@ -5,6 +5,7 @@ import { listNovels } from "@/lib/queries";
 import { NovelGrid } from "@/components/novel-grid";
 import { RatingStars } from "@/components/rating-stars";
 import { StatusBadge } from "@/components/status-badge";
+import { coverGradient } from "@/lib/utils";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -21,9 +22,9 @@ export default async function HomePage() {
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
       {hero ? (
-        <section className="mb-10 overflow-hidden rounded-2xl border border-border bg-surface">
+        <section className="hero-gradient mb-10 overflow-hidden rounded-2xl border border-border">
           <div className="grid gap-6 p-6 sm:grid-cols-[180px_1fr] sm:p-8">
-            <div className="relative mx-auto aspect-[3/4] w-40 overflow-hidden rounded-xl bg-surface-hover sm:mx-0 sm:w-full">
+            <div className="relative mx-auto aspect-[3/4] w-40 overflow-hidden rounded-xl shadow-lg sm:mx-0 sm:w-full">
               {hero.cover_url ? (
                 <Image
                   src={hero.cover_url}
@@ -33,7 +34,10 @@ export default async function HomePage() {
                   className="object-cover"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center px-2 text-center text-sm text-text-muted">
+                <div
+                  className="flex h-full items-center justify-center px-2 text-center text-sm font-semibold text-white"
+                  style={{ backgroundImage: coverGradient(hero.slug) }}
+                >
                   {hero.title}
                 </div>
               )}
@@ -58,7 +62,7 @@ export default async function HomePage() {
               </p>
               <Link
                 href={`/novel/${hero.slug}`}
-                className="mt-2 w-fit rounded-lg bg-accent px-5 py-2.5 font-medium text-white hover:bg-accent-hover"
+                className="gradient-accent mt-2 w-fit rounded-lg px-5 py-2.5 font-medium text-white shadow-md transition hover:opacity-90 hover:shadow-lg"
               >
                 Đọc ngay
               </Link>
@@ -66,7 +70,7 @@ export default async function HomePage() {
           </div>
         </section>
       ) : (
-        <section className="mb-10 rounded-2xl border border-dashed border-border p-10 text-center">
+        <section className="hero-gradient mb-10 rounded-2xl border border-border p-10 text-center">
           <h1 className="text-2xl font-bold text-text">
             Chào mừng đến với TruyệnHay
           </h1>
@@ -76,7 +80,7 @@ export default async function HomePage() {
           </p>
           <Link
             href="/signup"
-            className="mt-5 inline-block rounded-lg bg-accent px-5 py-2.5 font-medium text-white hover:bg-accent-hover"
+            className="gradient-accent mt-5 inline-block rounded-lg px-5 py-2.5 font-medium text-white shadow-md transition hover:opacity-90 hover:shadow-lg"
           >
             Bắt đầu ngay
           </Link>

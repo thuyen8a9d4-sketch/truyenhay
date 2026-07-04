@@ -61,9 +61,9 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         </span>
       </label>
 
-      {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {state?.error && <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>}
       {state?.success && (
-        <p className="text-sm text-green-400">Đã lưu thay đổi.</p>
+        <p className="text-sm text-green-600 dark:text-green-400">Đã lưu thay đổi.</p>
       )}
 
       <button
