@@ -6,7 +6,7 @@ import { LibraryCard } from "@/components/library-card";
 import { EmptyState } from "@/components/empty-state";
 
 export const metadata: Metadata = {
-  title: "Thư viện của tôi | TruyệnHay",
+  title: "Thư viện của tôi | VanThu",
 };
 
 export default async function LibraryPage() {

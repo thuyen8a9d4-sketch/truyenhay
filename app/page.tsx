@@ -72,7 +72,7 @@ export default async function HomePage() {
       ) : (
         <section className="hero-gradient mb-10 rounded-2xl border border-border p-10 text-center">
           <h1 className="text-2xl font-bold text-text">
-            Chào mừng đến với TruyệnHay
+            Chào mừng đến với VanThu
           </h1>
           <p className="mx-auto mt-2 max-w-md text-text-muted">
             Nền tảng chưa có truyện nào. Hãy là người đầu tiên đăng ký tài khoản,

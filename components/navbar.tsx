@@ -5,6 +5,7 @@ import { NavSearch } from "@/components/nav-search";
 import { NavGenreMenu } from "@/components/nav-genre-menu";
 import { NavUserMenu } from "@/components/nav-user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { getWallet } from "@/lib/queries";
 
 export async function Navbar() {
   const supabase = await createClient();
@@ -13,11 +14,13 @@ export async function Navbar() {
     getCurrentProfile(),
   ]);
 
+  const coinBalance = profile ? await getWallet(supabase, profile.id) : 0;
+
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-bg/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
         <Link href="/" className="gradient-accent shrink-0 bg-clip-text text-xl font-extrabold text-transparent">
-          TruyệnHay
+          VanThu
         </Link>
 
         <nav className="flex items-center gap-1">
@@ -41,7 +44,7 @@ export async function Navbar() {
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <ThemeToggle />
           {profile ? (
-            <NavUserMenu profile={profile} />
+            <NavUserMenu profile={profile} coinBalance={coinBalance} />
           ) : (
             <>
               <Link

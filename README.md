@@ -1,4 +1,4 @@
-# TruyệnHay
+# VanThu
 
 Nền tảng đọc & đăng tiểu thuyết online, miễn phí, lấy cảm hứng từ giao diện/chức năng của [webnovel.com](https://www.webnovel.com/vi). Bất kỳ ai cũng có thể đăng ký tài khoản, bật chế độ **tác giả** và đăng truyện/chương của riêng mình.
 
@@ -19,6 +19,8 @@ Toàn bộ ngăn xếp đều có gói miễn phí, phù hợp để tự host m
 - Thư viện cá nhân: theo dõi truyện đã lưu + tiến độ đọc
 - Bảng xếp hạng theo lượt xem / đánh giá / mới nhất
 - Trang tác giả: tạo/sửa/xoá truyện, quản lý chương, tải ảnh bìa
+- **Hệ thống xu & khoá chương trả phí**: tác giả có thể khoá chương và đặt giá xu; độc giả trả xu để mở khoá. Doanh thu chia tự động 60% tác giả / 40% nền tảng.
+- **Trang Nạp xu** (thủ công qua chuyển khoản + admin xác nhận, chưa kết nối cổng thanh toán thật) và **Sao kê thu nhập** cho tác giả/admin để tự khai thuế (xem thêm ở [DEPLOY.md](./DEPLOY.md))
 
 ## Chạy dự án ở máy local
 

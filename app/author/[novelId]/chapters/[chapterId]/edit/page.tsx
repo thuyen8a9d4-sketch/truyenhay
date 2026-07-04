@@ -6,7 +6,7 @@ import { updateChapter } from "@/lib/actions/chapters";
 import { ChapterForm } from "@/components/chapter-form";
 
 export const metadata: Metadata = {
-  title: "Sửa chương | TruyệnHay",
+  title: "Sửa chương | VanThu",
 };
 
 type Params = Promise<{ novelId: string; chapterId: string }>;
@@ -33,6 +33,12 @@ export default async function EditChapterPage({ params }: { params: Params }) {
     .single();
   if (!chapter) notFound();
 
+  const { data: chapterContent } = await supabase
+    .from("chapter_contents")
+    .select("content")
+    .eq("chapter_id", chapterId)
+    .single();
+
   const action = updateChapter.bind(null, chapterId, novelId, novel.slug);
 
   return (
@@ -44,7 +50,9 @@ export default async function EditChapterPage({ params }: { params: Params }) {
           initial={{
             chapterNumber: chapter.chapter_number,
             title: chapter.title,
-            content: chapter.content,
+            content: chapterContent?.content ?? "",
+            isLocked: chapter.is_locked,
+            priceCoins: chapter.price_coins,
           }}
           submitLabel="Lưu thay đổi"
         />

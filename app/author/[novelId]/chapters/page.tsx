@@ -9,7 +9,7 @@ import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Quản lý chương | TruyệnHay",
+  title: "Quản lý chương | VanThu",
 };
 
 type Params = Promise<{ novelId: string }>;

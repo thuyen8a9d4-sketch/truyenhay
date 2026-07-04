@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { ChapterFormState } from "@/lib/actions/chapters";
 
 export function ChapterForm({
@@ -9,13 +9,20 @@ export function ChapterForm({
   submitLabel,
 }: {
   action: (state: ChapterFormState, formData: FormData) => Promise<ChapterFormState>;
-  initial?: { chapterNumber: number; title: string; content: string };
+  initial?: {
+    chapterNumber: number;
+    title: string;
+    content: string;
+    isLocked?: boolean;
+    priceCoins?: number;
+  };
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState<ChapterFormState, FormData>(
     action,
     undefined,
   );
+  const [isLocked, setIsLocked] = useState(initial?.isLocked ?? false);
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
@@ -60,6 +67,40 @@ export function ChapterForm({
           placeholder="Mỗi dòng trống sẽ tách thành một đoạn văn khi hiển thị."
           className="resize-y rounded-lg border border-border bg-surface px-3.5 py-2.5 text-text outline-none focus:border-accent"
         />
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4">
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            name="isLocked"
+            checked={isLocked}
+            onChange={(e) => setIsLocked(e.target.checked)}
+            className="h-4 w-4 accent-[var(--accent)]"
+          />
+          <span className="text-sm text-text">
+            🔒 Khoá chương này — độc giả cần trả xu để đọc
+          </span>
+        </label>
+
+        {isLocked && (
+          <div className="flex flex-col gap-1.5 pl-7">
+            <label htmlFor="priceCoins" className="text-sm text-text-muted">
+              Giá mở khoá (xu)
+            </label>
+            <input
+              id="priceCoins"
+              type="number"
+              name="priceCoins"
+              min={1}
+              defaultValue={initial?.priceCoins || 10}
+              className="w-32 rounded-lg border border-border bg-bg px-3.5 py-2.5 text-text outline-none focus:border-accent"
+            />
+            <p className="text-xs text-text-muted">
+              Bạn nhận 60% giá trị, nền tảng giữ 40%. Xem chi tiết ở trang Sao kê thu nhập.
+            </p>
+          </div>
+        )}
       </div>
 
       {state?.error && <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>}

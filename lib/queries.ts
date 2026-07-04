@@ -238,18 +238,38 @@ export type ChapterListItem = {
   title: string;
   created_at: string;
   views: number;
+  is_locked: boolean;
+  price_coins: number;
+  unlocked: boolean;
 };
 
 export async function getChapterList(
   supabase: SB,
   novelId: string,
+  userId?: string,
 ): Promise<ChapterListItem[]> {
   const { data } = await supabase
     .from("chapters")
-    .select("id, chapter_number, title, created_at, views")
+    .select("id, chapter_number, title, created_at, views, is_locked, price_coins")
     .eq("novel_id", novelId)
     .order("chapter_number", { ascending: true });
-  return data ?? [];
+
+  const chapters = data ?? [];
+  if (!userId || chapters.length === 0) {
+    return chapters.map((c) => ({ ...c, unlocked: false }));
+  }
+
+  const { data: unlocks } = await supabase
+    .from("chapter_unlocks")
+    .select("chapter_id")
+    .eq("user_id", userId)
+    .in(
+      "chapter_id",
+      chapters.map((c) => c.id),
+    );
+
+  const unlockedSet = new Set((unlocks ?? []).map((u) => u.chapter_id));
+  return chapters.map((c) => ({ ...c, unlocked: unlockedSet.has(c.id) }));
 }
 
 export type ReviewItem = {
@@ -313,6 +333,148 @@ export async function getComments(
 
   const map = new Map((profiles ?? []).map((p) => [p.id, p]));
   return data.map((c) => ({ ...c, author: map.get(c.user_id) ?? null }));
+}
+
+export async function getWallet(supabase: SB, userId: string): Promise<number> {
+  const { data } = await supabase
+    .from("wallets")
+    .select("coin_balance")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data?.coin_balance ?? 0;
+}
+
+export async function getChapterContent(
+  supabase: SB,
+  chapterId: string,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("chapter_contents")
+    .select("content")
+    .eq("chapter_id", chapterId)
+    .maybeSingle();
+  return data?.content ?? null;
+}
+
+export type IncomeSummary = {
+  totalTransactions: number;
+  totalCoinsSpent: number;
+  totalValueVnd: number;
+  totalAuthorEarningVnd: number;
+  totalPlatformEarningVnd: number;
+  byMonth: {
+    month: string;
+    valueVnd: number;
+    authorEarningVnd: number;
+    platformEarningVnd: number;
+    transactions: number;
+  }[];
+};
+
+export async function getIncomeStatement(supabase: SB): Promise<IncomeSummary> {
+  const { data } = await supabase
+    .from("chapter_unlocks")
+    .select("coins_spent, value_vnd, author_earning_vnd, platform_earning_vnd, created_at")
+    .order("created_at", { ascending: false });
+
+  const rows = data ?? [];
+  const byMonthMap = new Map<
+    string,
+    { valueVnd: number; authorEarningVnd: number; platformEarningVnd: number; transactions: number }
+  >();
+
+  let totalCoinsSpent = 0;
+  let totalValueVnd = 0;
+  let totalAuthorEarningVnd = 0;
+  let totalPlatformEarningVnd = 0;
+
+  for (const r of rows) {
+    totalCoinsSpent += r.coins_spent;
+    totalValueVnd += Number(r.value_vnd);
+    totalAuthorEarningVnd += Number(r.author_earning_vnd);
+    totalPlatformEarningVnd += Number(r.platform_earning_vnd);
+
+    const month = r.created_at.slice(0, 7);
+    const entry = byMonthMap.get(month) ?? {
+      valueVnd: 0,
+      authorEarningVnd: 0,
+      platformEarningVnd: 0,
+      transactions: 0,
+    };
+    entry.valueVnd += Number(r.value_vnd);
+    entry.authorEarningVnd += Number(r.author_earning_vnd);
+    entry.platformEarningVnd += Number(r.platform_earning_vnd);
+    entry.transactions += 1;
+    byMonthMap.set(month, entry);
+  }
+
+  const byMonth = Array.from(byMonthMap.entries())
+    .map(([month, v]) => ({ month, ...v }))
+    .sort((a, b) => b.month.localeCompare(a.month));
+
+  return {
+    totalTransactions: rows.length,
+    totalCoinsSpent,
+    totalValueVnd,
+    totalAuthorEarningVnd,
+    totalPlatformEarningVnd,
+    byMonth,
+  };
+}
+
+export type AuthorIncomeRow = {
+  authorId: string;
+  authorName: string;
+  transactions: number;
+  totalValueVnd: number;
+  authorEarningVnd: number;
+  platformEarningVnd: number;
+};
+
+export async function getIncomeByAuthor(supabase: SB): Promise<AuthorIncomeRow[]> {
+  const { data } = await supabase
+    .from("chapter_unlocks")
+    .select("novel_id, value_vnd, author_earning_vnd, platform_earning_vnd");
+
+  const rows = data ?? [];
+  if (rows.length === 0) return [];
+
+  const novelIds = Array.from(new Set(rows.map((r) => r.novel_id)));
+  const { data: novels } = await supabase
+    .from("novels")
+    .select("id, author_id")
+    .in("id", novelIds);
+  const novelMap = new Map((novels ?? []).map((n) => [n.id, n]));
+
+  const authorIds = Array.from(new Set((novels ?? []).map((n) => n.author_id)));
+  const { data: authors } = await supabase
+    .from("profiles")
+    .select("id, username, display_name")
+    .in("id", authorIds);
+  const authorMap = new Map((authors ?? []).map((a) => [a.id, a]));
+
+  const byAuthor = new Map<string, AuthorIncomeRow>();
+  for (const r of rows) {
+    const novel = novelMap.get(r.novel_id);
+    if (!novel) continue;
+    const author = authorMap.get(novel.author_id);
+    const key = novel.author_id;
+    const entry = byAuthor.get(key) ?? {
+      authorId: key,
+      authorName: author?.display_name ?? author?.username ?? "Không rõ",
+      transactions: 0,
+      totalValueVnd: 0,
+      authorEarningVnd: 0,
+      platformEarningVnd: 0,
+    };
+    entry.transactions += 1;
+    entry.totalValueVnd += Number(r.value_vnd);
+    entry.authorEarningVnd += Number(r.author_earning_vnd);
+    entry.platformEarningVnd += Number(r.platform_earning_vnd);
+    byAuthor.set(key, entry);
+  }
+
+  return Array.from(byAuthor.values()).sort((a, b) => b.authorEarningVnd - a.authorEarningVnd);
 }
 
 export async function getUserRating(supabase: SB, novelId: string, userId: string) {

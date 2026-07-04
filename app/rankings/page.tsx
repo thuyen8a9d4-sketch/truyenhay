@@ -6,7 +6,7 @@ import { NovelGrid } from "@/components/novel-grid";
 import { Pagination } from "@/components/pagination";
 
 export const metadata: Metadata = {
-  title: "Bảng xếp hạng | TruyệnHay",
+  title: "Bảng xếp hạng | VanThu",
 };
 
 const PAGE_SIZE = 24;

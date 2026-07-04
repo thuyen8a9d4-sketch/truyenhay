@@ -7,7 +7,7 @@ import { createChapter } from "@/lib/actions/chapters";
 import { ChapterForm } from "@/components/chapter-form";
 
 export const metadata: Metadata = {
-  title: "Thêm chương mới | TruyệnHay",
+  title: "Thêm chương mới | VanThu",
 };
 
 type Params = Promise<{ novelId: string }>;

@@ -8,7 +8,7 @@ import { NovelForm } from "@/components/novel-form";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 
 export const metadata: Metadata = {
-  title: "Chỉnh sửa truyện | TruyệnHay",
+  title: "Chỉnh sửa truyện | VanThu",
 };
 
 type Params = Promise<{ novelId: string }>;

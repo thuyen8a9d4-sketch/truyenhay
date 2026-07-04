@@ -30,9 +30,15 @@ export function ChapterList({
           }`}
         >
           <span className="truncate text-text">
+            {c.is_locked && c.price_coins > 0 && !c.unlocked && "🔒 "}
             Chương {c.chapter_number}: {c.title}
           </span>
-          <span className="shrink-0 text-xs text-text-muted">
+          <span className="flex shrink-0 items-center gap-2 text-xs text-text-muted">
+            {c.is_locked && c.price_coins > 0 && !c.unlocked && (
+              <span className="rounded-full bg-accent/15 px-2 py-0.5 text-accent">
+                {c.price_coins} xu
+              </span>
+            )}
             {formatDate(c.created_at)}
           </span>
         </Link>

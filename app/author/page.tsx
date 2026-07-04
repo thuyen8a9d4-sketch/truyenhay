@@ -8,7 +8,7 @@ import { formatNumber } from "@/lib/utils";
 import { StatusBadge } from "@/components/status-badge";
 
 export const metadata: Metadata = {
-  title: "Trang tác giả | TruyệnHay",
+  title: "Trang tác giả | VanThu",
 };
 
 export default async function AuthorDashboardPage() {

@@ -27,8 +27,8 @@ export async function generateMetadata({
   const { slug } = await params;
   const supabase = await createClient();
   const novel = await getNovelDetail(supabase, slug);
-  if (!novel) return { title: "Không tìm thấy truyện | TruyệnHay" };
-  return { title: `${novel.title} | TruyệnHay`, description: novel.synopsis };
+  if (!novel) return { title: "Không tìm thấy truyện | VanThu" };
+  return { title: `${novel.title} | VanThu`, description: novel.synopsis };
 }
 
 export default async function NovelDetailPage({ params }: { params: Params }) {
@@ -43,7 +43,7 @@ export default async function NovelDetailPage({ params }: { params: Params }) {
   } = await supabase.auth.getUser();
 
   const [chapters, reviews, libraryEntry, userRating] = await Promise.all([
-    getChapterList(supabase, novel.id),
+    getChapterList(supabase, novel.id, user?.id),
     getReviews(supabase, novel.id),
     user
       ? supabase

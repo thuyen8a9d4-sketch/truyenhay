@@ -4,7 +4,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { ProfileForm } from "@/components/profile-form";
 
 export const metadata: Metadata = {
-  title: "Hồ sơ của tôi | TruyệnHay",
+  title: "Hồ sơ của tôi | VanThu",
 };
 
 export default async function ProfilePage() {

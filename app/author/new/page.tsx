@@ -7,7 +7,7 @@ import { createNovel } from "@/lib/actions/novels";
 import { NovelForm } from "@/components/novel-form";
 
 export const metadata: Metadata = {
-  title: "Đăng truyện mới | TruyệnHay",
+  title: "Đăng truyện mới | VanThu",
 };
 
 export default async function NewNovelPage() {

@@ -12,7 +12,7 @@ const beVietnamPro = Be_Vietnam_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "TruyệnHay - Đọc tiểu thuyết online miễn phí",
+  title: "VanThu - Đọc tiểu thuyết online miễn phí",
   description:
     "Nền tảng đọc và đăng tiểu thuyết online miễn phí. Khám phá hàng ngàn truyện thuộc mọi thể loại: ngôn tình, kiếm hiệp, huyền huyễn, đô thị...",
 };
