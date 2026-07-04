@@ -14,7 +14,15 @@ Làm theo đúng thứ tự 3 bước dưới đây. Toàn bộ đều dùng gó
 8. Vào **Project Settings > API**, lấy 2 giá trị:
    - **Project URL** → dùng cho `NEXT_PUBLIC_SUPABASE_URL`
    - **anon public key** (hoặc **Publishable key** ở dashboard mới) → dùng cho `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-9. (Tuỳ chọn) Vào **Authentication > Sign In / Providers**, có thể tắt "Confirm email" nếu muốn người dùng đăng nhập ngay sau khi đăng ký mà không cần xác nhận email — hữu ích khi mới demo dự án.
+9. **Bắt buộc để xác thực OTP hoạt động**: vào **Authentication > Emails > Confirm signup** (hoặc **Email Templates**), sửa nội dung email để hiển thị mã OTP thay vì chỉ link. Thêm biến `{{ .Token }}` vào template, ví dụ:
+   ```html
+   <h2>Xác nhận đăng ký VanThu</h2>
+   <p>Mã xác thực (OTP) của bạn là:</p>
+   <h1 style="letter-spacing: 4px;">{{ .Token }}</h1>
+   <p>Mã có hiệu lực trong 1 giờ. Nhập mã này trên trang web để hoàn tất đăng ký.</p>
+   ```
+   Nếu bỏ qua bước này, email gửi đi sẽ chỉ có link xác nhận mặc định chứ không có mã số — người dùng sẽ không có gì để nhập vào ô OTP trên web.
+10. Đảm bảo **"Confirm email"** đang **bật** (mặc định) trong **Authentication > Sign In / Providers** — tắt tính năng này sẽ khiến bước xác thực OTP không bao giờ được kích hoạt (tài khoản được xác nhận ngay, bỏ qua OTP).
 
 ## Bước 2: Đưa code lên GitHub
 
@@ -48,7 +56,7 @@ git push -u origin main
 
 Trang web ban đầu sẽ **chưa có truyện nào** (đây là nền tảng để cộng đồng tự đăng nội dung, không đi kèm truyện có sẵn để tránh vi phạm bản quyền). Để có nội dung:
 
-1. Vào trang web vừa deploy → **Đăng ký** tài khoản.
+1. Vào trang web vừa deploy → **Đăng ký** tài khoản → nhập mã OTP 6 số nhận được qua email để xác thực (xem Bước 1.9-1.10 ở trên nếu chưa nhận được mã).
 2. Vào **Hồ sơ** → tick "Tôi muốn trở thành tác giả" → **Lưu thay đổi**.
 3. Vào **Trang tác giả** → **+ Đăng truyện mới** → điền thông tin, tải ảnh bìa (tuỳ chọn) → **Tạo truyện**.
 4. Bạn sẽ được chuyển đến form thêm chương đầu tiên — điền tiêu đề và nội dung rồi **Đăng chương**.

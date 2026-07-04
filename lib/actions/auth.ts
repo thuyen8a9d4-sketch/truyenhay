@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getOrigin } from "@/lib/site-url";
 
-export type AuthState = { error?: string; message?: string } | undefined;
+export type AuthState = { error?: string } | undefined;
 
 export async function signIn(
   _prevState: AuthState,
@@ -63,9 +63,47 @@ export async function signUp(
     redirect("/");
   }
 
-  return {
-    message: "Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.",
-  };
+  redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
+}
+
+export type OtpState = { error?: string } | undefined;
+
+export async function verifySignupOtp(
+  _prevState: OtpState,
+  formData: FormData,
+): Promise<OtpState> {
+  const email = String(formData.get("email") ?? "").trim();
+  const token = String(formData.get("token") ?? "").trim();
+
+  if (!email || !token) {
+    return { error: "Vui lòng nhập đầy đủ mã OTP." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "signup",
+  });
+
+  if (error) {
+    return { error: "Mã OTP không đúng hoặc đã hết hạn." };
+  }
+
+  redirect("/");
+}
+
+export async function resendSignupOtp(
+  email: string,
+): Promise<{ error?: string; sent?: boolean }> {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resend({ type: "signup", email });
+
+  if (error) {
+    return { error: "Không thể gửi lại mã. Vui lòng thử lại sau." };
+  }
+
+  return { sent: true };
 }
 
 export async function signOut() {

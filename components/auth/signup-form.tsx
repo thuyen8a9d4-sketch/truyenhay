@@ -9,14 +9,6 @@ const initialState: AuthState = undefined;
 export function SignupForm() {
   const [state, action, pending] = useActionState(signUp, initialState);
 
-  if (state?.message) {
-    return (
-      <div className="rounded-lg border border-border bg-surface p-4 text-sm text-text">
-        {state.message}
-      </div>
-    );
-  }
-
   return (
     <form action={action} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
