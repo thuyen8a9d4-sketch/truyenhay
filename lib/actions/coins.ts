@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { COIN_VALUE_VND } from "@/lib/database.types";
 
 export type UnlockResult = { success: boolean; message: string; newBalance: number };
 
@@ -43,13 +44,15 @@ export async function creditCoins(
   const supabase = await createClient();
 
   const usernameOrEmail = String(formData.get("usernameOrEmail") ?? "").trim();
-  const coins = Number(formData.get("coins"));
   const amountVnd = Number(formData.get("amountVnd"));
   const note = String(formData.get("note") ?? "").trim() || null;
 
   if (!usernameOrEmail) return { error: "Vui lòng nhập username người nhận." };
-  if (!coins || coins < 1) return { error: "Số xu không hợp lệ." };
-  if (!amountVnd || amountVnd < 0) return { error: "Số tiền không hợp lệ." };
+  if (!amountVnd || amountVnd < COIN_VALUE_VND) {
+    return { error: `Số tiền tối thiểu ${COIN_VALUE_VND.toLocaleString("vi-VN")}đ (= 1 xu).` };
+  }
+
+  const coins = Math.floor(amountVnd / COIN_VALUE_VND);
 
   const { data: targetProfile } = await supabase
     .from("profiles")

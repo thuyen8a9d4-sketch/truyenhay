@@ -1,13 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { creditCoins, type CreditCoinsState } from "@/lib/actions/coins";
+import { COIN_VALUE_VND } from "@/lib/database.types";
 
 export function CreditCoinsForm() {
   const [state, formAction, pending] = useActionState<CreditCoinsState, FormData>(
     creditCoins,
     undefined,
   );
+  const [amountVnd, setAmountVnd] = useState("");
+  const coins = Math.floor((Number(amountVnd) || 0) / COIN_VALUE_VND);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -24,33 +27,26 @@ export function CreditCoinsForm() {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="coins" className="text-sm text-text-muted">
-            Số xu cộng
-          </label>
-          <input
-            id="coins"
-            type="number"
-            name="coins"
-            min={1}
-            required
-            className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-text outline-none focus:border-accent"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="amountVnd" className="text-sm text-text-muted">
-            Số tiền đã nhận (VNĐ)
-          </label>
-          <input
-            id="amountVnd"
-            type="number"
-            name="amountVnd"
-            min={0}
-            required
-            className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-text outline-none focus:border-accent"
-          />
-        </div>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="amountVnd" className="text-sm text-text-muted">
+          Số tiền đã nhận (VNĐ)
+        </label>
+        <input
+          id="amountVnd"
+          type="number"
+          name="amountVnd"
+          min={COIN_VALUE_VND}
+          step={COIN_VALUE_VND}
+          required
+          value={amountVnd}
+          onChange={(e) => setAmountVnd(e.target.value)}
+          placeholder="vd: 100000"
+          className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-text outline-none focus:border-accent"
+        />
+        <p className="text-sm text-text-muted">
+          Sẽ cộng: <strong className="text-accent">🪙 {coins.toLocaleString("vi-VN")} xu</strong>{" "}
+          (tỉ giá 1 xu = {COIN_VALUE_VND.toLocaleString("vi-VN")}đ)
+        </p>
       </div>
 
       <div className="flex flex-col gap-1.5">
