@@ -11,11 +11,12 @@ Làm theo đúng thứ tự 3 bước dưới đây. Toàn bộ đều dùng gó
 5. Mở file [`supabase/migrations/0001_init.sql`](./supabase/migrations/0001_init.sql) trong dự án, copy toàn bộ nội dung, dán vào SQL Editor, bấm **Run**.
 6. Làm tương tự với file [`supabase/migrations/0002_monetization.sql`](./supabase/migrations/0002_monetization.sql) — file này tạo hệ thống xu, khoá chương trả phí, chia doanh thu tác giả/nền tảng.
 7. Làm tương tự với file [`supabase/migrations/0003_roles_pricing_withdrawals.sql`](./supabase/migrations/0003_roles_pricing_withdrawals.sql) — file này thêm quy trình duyệt (đơn xin làm tác giả, duyệt truyện), giới hạn giá xu theo lượt xem, và chức năng rút tiền.
-8. Làm tương tự với file [`supabase/seed.sql`](./supabase/seed.sql) để tạo sẵn danh sách thể loại.
-9. Vào **Project Settings > API**, lấy 2 giá trị:
+8. Làm tương tự với file [`supabase/migrations/0004_dashboard_stats.sql`](./supabase/migrations/0004_dashboard_stats.sql) — file này thêm thống kê lượt xem theo ngày và số lượt sưu tầm, phục vụ bảng điều khiển tác giả/quản trị.
+9. Làm tương tự với file [`supabase/seed.sql`](./supabase/seed.sql) để tạo sẵn danh sách thể loại.
+10. Vào **Project Settings > API**, lấy 2 giá trị:
    - **Project URL** → dùng cho `NEXT_PUBLIC_SUPABASE_URL`
    - **anon public key** (hoặc **Publishable key** ở dashboard mới) → dùng cho `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-10. **Bắt buộc để xác thực OTP hoạt động**: vào **Authentication > Emails > Confirm signup** (hoặc **Email Templates**), sửa nội dung email để hiển thị mã OTP thay vì chỉ link. Thêm biến `{{ .Token }}` vào template, ví dụ:
+11. **Bắt buộc để xác thực OTP hoạt động**: vào **Authentication > Emails > Confirm signup** (hoặc **Email Templates**), sửa nội dung email để hiển thị mã OTP thay vì chỉ link. Thêm biến `{{ .Token }}` vào template, ví dụ:
     ```html
     <h2>Xác nhận đăng ký VanThu</h2>
     <p>Mã xác thực (OTP) của bạn là:</p>
@@ -23,7 +24,7 @@ Làm theo đúng thứ tự 3 bước dưới đây. Toàn bộ đều dùng gó
     <p>Mã có hiệu lực trong 1 giờ. Nhập mã này trên trang web để hoàn tất đăng ký.</p>
     ```
     Nếu bỏ qua bước này, email gửi đi sẽ chỉ có link xác nhận mặc định chứ không có mã số — người dùng sẽ không có gì để nhập vào ô OTP trên web.
-11. Đảm bảo **"Confirm email"** đang **bật** (mặc định) trong **Authentication > Sign In / Providers** — tắt tính năng này sẽ khiến bước xác thực OTP không bao giờ được kích hoạt (tài khoản được xác nhận ngay, bỏ qua OTP).
+12. Đảm bảo **"Confirm email"** đang **bật** (mặc định) trong **Authentication > Sign In / Providers** — tắt tính năng này sẽ khiến bước xác thực OTP không bao giờ được kích hoạt (tài khoản được xác nhận ngay, bỏ qua OTP).
 
 ## Bước 2: Đưa code lên GitHub
 
@@ -57,12 +58,14 @@ git push -u origin main
 
 Trang web ban đầu sẽ **chưa có truyện nào** (đây là nền tảng để cộng đồng tự đăng nội dung, không đi kèm truyện có sẵn để tránh vi phạm bản quyền). Để có nội dung:
 
-1. Vào trang web vừa deploy → **Đăng ký** tài khoản → nhập mã OTP 6 số nhận được qua email để xác thực (xem Bước 1.10-1.11 ở trên nếu chưa nhận được mã).
-2. Vào menu tài khoản → **Đơn xin làm tác giả** → điền lý do → **Gửi đơn**.
-3. Tự phong **admin** cho tài khoản của bạn (xem Bước 4 bên dưới), sau đó vào **Quản trị — Duyệt tác giả** để tự duyệt đơn vừa gửi.
-4. Vào **Trang tác giả** → **+ Đăng truyện mới** → điền thông tin, tick đồng ý Hợp đồng điện tử, tải ảnh bìa (tuỳ chọn) → **Tạo truyện**. Truyện sẽ ở trạng thái "Chờ duyệt".
-5. Vào **Quản trị — Duyệt truyện** → duyệt truyện vừa tạo để nó hiển thị công khai.
-6. Quay lại **Trang tác giả** → **Quản lý chương** → thêm chương đầu tiên rồi **Đăng chương**.
+1. Vào trang web vừa deploy → **Đăng ký** tài khoản → nhập mã OTP 6 số nhận được qua email để xác thực (xem Bước 1.11-1.12 ở trên nếu chưa nhận được mã).
+2. Vào menu tài khoản (avatar góc phải) → **Đơn xin làm tác giả** → điền lý do → **Gửi đơn**.
+3. Tự phong **admin** cho tài khoản của bạn (xem Bước 4 bên dưới), sau đó vào menu tài khoản → **Chuyển sang Trang quản trị** → **Duyệt tác giả** để tự duyệt đơn vừa gửi.
+4. Vào menu tài khoản → **Chuyển sang Trang tác giả** → **Đăng truyện mới** → điền thông tin, tick đồng ý Hợp đồng điện tử, tải ảnh bìa (tuỳ chọn) → **Tạo truyện**. Truyện sẽ ở trạng thái "Chờ duyệt".
+5. Sang **Trang quản trị** → **Duyệt truyện** → duyệt truyện vừa tạo để nó hiển thị công khai.
+6. Quay lại **Trang tác giả** → **Truyện của tôi** → **Quản lý chương** → thêm chương đầu tiên rồi **Đăng chương**.
+
+Trang tác giả và Trang quản trị đều là bảng điều khiển riêng có thanh điều hướng dọc bên trái; nút **"Chế độ độc giả"** ở đáy thanh này đưa bạn quay lại trang đọc bình thường.
 
 ## Bước 4: Kích hoạt tài khoản Quản trị (admin) cho hệ thống xu
 
@@ -73,7 +76,7 @@ Chức năng kiếm tiền (xu, khoá chương, sao kê thu nhập, duyệt tác
    ```sql
    update public.profiles set is_admin = true where username = 'username-cua-ban';
    ```
-3. Đăng xuất/đăng nhập lại trên web — menu tài khoản sẽ hiện thêm **Quản trị — Cộng xu**, **Quản trị — Doanh thu**, **Quản trị — Duyệt tác giả**, **Quản trị — Duyệt truyện**, **Quản trị — Duyệt rút tiền**.
+3. Đăng xuất/đăng nhập lại trên web — menu tài khoản sẽ hiện mục **Chuyển sang Trang quản trị**, dẫn vào bảng điều khiển admin (Tổng quan, Duyệt tác giả, Duyệt truyện, Duyệt rút tiền, Cộng xu, Doanh thu).
 
 ## Về phân quyền, duyệt truyện và rút tiền
 

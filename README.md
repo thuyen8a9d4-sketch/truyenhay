@@ -18,7 +18,8 @@ Toàn bộ ngăn xếp đều có gói miễn phí, phù hợp để tự host m
 - Trang đọc chương: điều hướng chương trước/sau, đổi cỡ chữ & nền (tối/sáng/sepia), tự lưu tiến độ đọc, bình luận theo chương
 - Thư viện cá nhân: theo dõi truyện đã lưu + tiến độ đọc
 - Bảng xếp hạng theo lượt xem / đánh giá / mới nhất
-- Trang tác giả: tạo/sửa/xoá truyện, quản lý chương, tải ảnh bìa
+- **Bảng điều khiển tác giả** (kiểu Inkstone): tổng quan lượt xem theo ngày + biểu đồ 7 ngày, lượt sưu tầm, doanh thu từng truyện, thống kê phát hành chương, quản lý truyện/chương, tải ảnh bìa — có nút chuyển nhanh qua lại chế độ độc giả.
+- **Bảng điều khiển quản trị**: tổng quan hệ thống (người dùng, tác giả, truyện, doanh thu, lượt xem hôm nay) + khu "việc cần xử lý" gom đơn tác giả/truyện/rút tiền đang chờ duyệt.
 - **Phân quyền 3 vai trò (Reader/Author/Admin)**: đăng ký tự do ở vai Reader; xin làm Author qua **Đơn xin làm tác giả** cần Admin duyệt; Admin được cấp thủ công qua SQL. Không thể tự nâng quyền qua API (chặn ở tầng database).
 - **Duyệt truyện**: mọi truyện mới phải được Admin duyệt ở trang **Quản trị — Duyệt truyện** mới hiển thị công khai; tác giả phải đồng ý Hợp đồng điện tử trước khi đăng.
 - **Hệ thống xu & khoá chương trả phí**: tác giả có thể khoá chương và đặt giá xu (giới hạn tối đa 10 xu/chương cho truyện mới, 100 xu/chương sau khi đạt 10.000 lượt xem — chặn ở tầng database); độc giả trả xu để mở khoá. Doanh thu chia tự động 60% tác giả / 40% nền tảng, tỉ giá 1 xu = 1.000đ.

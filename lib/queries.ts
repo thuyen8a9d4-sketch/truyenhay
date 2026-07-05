@@ -738,44 +738,94 @@ export async function getAuthorNovelEligibility(
   });
 }
 
-export type AuthorDashboardStat = {
-  novelId: string;
+export type AuthorNovelOverview = {
+  id: string;
+  title: string;
+  slug: string;
+  cover_url: string | null;
+  approval_status: Novel["approval_status"];
+  views: number;
+  chapterCount: number;
+  totalChars: number;
+  libraryCount: number;
   revenueVnd: number;
   commentCount: number;
+  views7d: { label: string; value: number }[];
 };
 
-export async function getAuthorDashboardStats(
-  supabase: SB,
-  authorId: string,
-): Promise<Map<string, AuthorDashboardStat>> {
-  const { data: novels } = await supabase
+export type AuthorOverview = {
+  novels: AuthorNovelOverview[];
+  totalViewsToday: number;
+  totalViewsYesterday: number;
+  totalLibraryCount: number;
+  totalRevenueVnd: number;
+};
+
+function last7Days(): string[] {
+  const days: string[] = [];
+  const now = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  return days;
+}
+
+export async function getAuthorOverview(supabase: SB, authorId: string): Promise<AuthorOverview> {
+  const { data: novelRows } = await supabase
     .from("novels")
-    .select("id")
-    .eq("author_id", authorId);
-  const novelIds = (novels ?? []).map((n) => n.id);
-  const result = new Map<string, AuthorDashboardStat>();
-  if (novelIds.length === 0) return result;
+    .select("id, title, slug, cover_url, approval_status, views")
+    .eq("author_id", authorId)
+    .order("updated_at", { ascending: false });
 
-  for (const id of novelIds) {
-    result.set(id, { novelId: id, revenueVnd: 0, commentCount: 0 });
+  const novels = novelRows ?? [];
+  const empty: AuthorOverview = {
+    novels: [],
+    totalViewsToday: 0,
+    totalViewsYesterday: 0,
+    totalLibraryCount: 0,
+    totalRevenueVnd: 0,
+  };
+  if (novels.length === 0) return empty;
+
+  const novelIds = novels.map((n) => n.id);
+  const days = last7Days();
+  const today = days[6];
+  const yesterday = days[5];
+
+  const [
+    { data: statsRows },
+    { data: contentRows },
+    { data: libraryRows },
+    { data: unlockRows },
+    { data: chapterRows },
+    { data: dailyRows },
+  ] = await Promise.all([
+    supabase.from("novel_stats").select("novel_id, chapter_count").in("novel_id", novelIds),
+    supabase.from("novel_content_stats").select("novel_id, total_chars").in("novel_id", novelIds),
+    supabase.from("novel_library_stats").select("novel_id, library_count").in("novel_id", novelIds),
+    supabase.from("chapter_unlocks").select("novel_id, author_earning_vnd").in("novel_id", novelIds),
+    supabase.from("chapters").select("id, novel_id").in("novel_id", novelIds),
+    supabase
+      .from("novel_view_daily")
+      .select("novel_id, day, views")
+      .in("novel_id", novelIds)
+      .gte("day", days[0]),
+  ]);
+
+  const chapterCountMap = new Map((statsRows ?? []).map((s) => [s.novel_id, s.chapter_count]));
+  const charsMap = new Map((contentRows ?? []).map((s) => [s.novel_id, s.total_chars]));
+  const libraryMap = new Map((libraryRows ?? []).map((s) => [s.novel_id, s.library_count]));
+
+  const revenueMap = new Map<string, number>();
+  for (const u of unlockRows ?? []) {
+    revenueMap.set(u.novel_id, (revenueMap.get(u.novel_id) ?? 0) + Number(u.author_earning_vnd));
   }
 
-  const { data: unlocks } = await supabase
-    .from("chapter_unlocks")
-    .select("novel_id, author_earning_vnd")
-    .in("novel_id", novelIds);
-  for (const u of unlocks ?? []) {
-    const entry = result.get(u.novel_id);
-    if (entry) entry.revenueVnd += Number(u.author_earning_vnd);
-  }
-
-  const { data: chapterRows } = await supabase
-    .from("chapters")
-    .select("id, novel_id")
-    .in("novel_id", novelIds);
   const chapterToNovel = new Map((chapterRows ?? []).map((c) => [c.id, c.novel_id]));
+  const commentMap = new Map<string, number>();
   const chapterIds = (chapterRows ?? []).map((c) => c.id);
-
   if (chapterIds.length > 0) {
     const { data: comments } = await supabase
       .from("comments")
@@ -783,10 +833,145 @@ export async function getAuthorDashboardStats(
       .in("chapter_id", chapterIds);
     for (const c of comments ?? []) {
       const novelId = chapterToNovel.get(c.chapter_id);
-      const entry = novelId ? result.get(novelId) : undefined;
-      if (entry) entry.commentCount += 1;
+      if (novelId) commentMap.set(novelId, (commentMap.get(novelId) ?? 0) + 1);
     }
   }
 
-  return result;
+  const dailyMap = new Map<string, number>();
+  for (const d of dailyRows ?? []) {
+    dailyMap.set(`${d.novel_id}|${d.day}`, d.views);
+  }
+
+  const overviewNovels: AuthorNovelOverview[] = novels.map((n) => ({
+    id: n.id,
+    title: n.title,
+    slug: n.slug,
+    cover_url: n.cover_url,
+    approval_status: n.approval_status,
+    views: n.views,
+    chapterCount: chapterCountMap.get(n.id) ?? 0,
+    totalChars: charsMap.get(n.id) ?? 0,
+    libraryCount: libraryMap.get(n.id) ?? 0,
+    revenueVnd: revenueMap.get(n.id) ?? 0,
+    commentCount: commentMap.get(n.id) ?? 0,
+    views7d: days.map((day) => ({
+      label: day.slice(8, 10) + "/" + day.slice(5, 7),
+      value: dailyMap.get(`${n.id}|${day}`) ?? 0,
+    })),
+  }));
+
+  let totalViewsToday = 0;
+  let totalViewsYesterday = 0;
+  for (const id of novelIds) {
+    totalViewsToday += dailyMap.get(`${id}|${today}`) ?? 0;
+    totalViewsYesterday += dailyMap.get(`${id}|${yesterday}`) ?? 0;
+  }
+
+  return {
+    novels: overviewNovels,
+    totalViewsToday,
+    totalViewsYesterday,
+    totalLibraryCount: overviewNovels.reduce((sum, n) => sum + n.libraryCount, 0),
+    totalRevenueVnd: overviewNovels.reduce((sum, n) => sum + n.revenueVnd, 0),
+  };
+}
+
+export async function getAuthorReleaseStats(
+  supabase: SB,
+  authorId: string,
+): Promise<{ label: string; value: number }[]> {
+  const { data: novels } = await supabase.from("novels").select("id").eq("author_id", authorId);
+  const novelIds = (novels ?? []).map((n) => n.id);
+
+  const months: string[] = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+
+  const counts = new Map<string, number>(months.map((m) => [m, 0]));
+  if (novelIds.length > 0) {
+    const { data: chapters } = await supabase
+      .from("chapters")
+      .select("created_at")
+      .in("novel_id", novelIds)
+      .gte("created_at", `${months[0]}-01`);
+    for (const c of chapters ?? []) {
+      const month = c.created_at.slice(0, 7);
+      if (counts.has(month)) counts.set(month, (counts.get(month) ?? 0) + 1);
+    }
+  }
+
+  return months.map((m) => ({
+    label: `${m.slice(5, 7)}/${m.slice(0, 4)}`,
+    value: counts.get(m) ?? 0,
+  }));
+}
+
+export type AdminOverview = {
+  totalUsers: number;
+  totalAuthors: number;
+  totalNovels: number;
+  pendingNovels: number;
+  pendingApplications: number;
+  pendingWithdrawals: number;
+  revenueThisMonthVnd: number;
+  totalRevenueVnd: number;
+  viewsToday: number;
+};
+
+export async function getAdminOverview(supabase: SB): Promise<AdminOverview> {
+  const monthStart = new Date().toISOString().slice(0, 7) + "-01";
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [
+    { count: totalUsers },
+    { count: totalAuthors },
+    { count: totalNovels },
+    { count: pendingNovels },
+    { count: pendingApplications },
+    { count: pendingWithdrawals },
+    { data: unlockRows },
+    { data: dailyRows },
+  ] = await Promise.all([
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
+    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_author", true),
+    supabase.from("novels").select("id", { count: "exact", head: true }),
+    supabase
+      .from("novels")
+      .select("id", { count: "exact", head: true })
+      .eq("approval_status", "pending"),
+    supabase
+      .from("author_applications")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending"),
+    supabase
+      .from("withdrawal_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending"),
+    supabase.from("chapter_unlocks").select("platform_earning_vnd, value_vnd, created_at"),
+    supabase.from("novel_view_daily").select("views").eq("day", today),
+  ]);
+
+  let totalRevenueVnd = 0;
+  let revenueThisMonthVnd = 0;
+  for (const u of unlockRows ?? []) {
+    totalRevenueVnd += Number(u.value_vnd);
+    if (u.created_at >= monthStart) revenueThisMonthVnd += Number(u.value_vnd);
+  }
+
+  const viewsToday = (dailyRows ?? []).reduce((sum, d) => sum + d.views, 0);
+
+  return {
+    totalUsers: totalUsers ?? 0,
+    totalAuthors: totalAuthors ?? 0,
+    totalNovels: totalNovels ?? 0,
+    pendingNovels: pendingNovels ?? 0,
+    pendingApplications: pendingApplications ?? 0,
+    pendingWithdrawals: pendingWithdrawals ?? 0,
+    revenueThisMonthVnd,
+    totalRevenueVnd,
+    viewsToday,
+  };
 }

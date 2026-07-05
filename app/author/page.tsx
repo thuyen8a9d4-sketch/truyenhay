@@ -3,103 +3,106 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getAuthorDashboardStats, listNovels } from "@/lib/queries";
-import { formatNumber } from "@/lib/utils";
-import { StatusBadge } from "@/components/status-badge";
-import { ApprovalBadge } from "@/components/approval-badge";
+import { getAuthorOverview, getAuthorReleaseStats, getNotifications } from "@/lib/queries";
+import { formatDate, formatNumber } from "@/lib/utils";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { BarChart } from "@/components/dashboard/bar-chart";
+import { NovelPicker } from "@/components/dashboard/novel-picker";
 
 export const metadata: Metadata = {
-  title: "Trang tác giả | VanThu",
+  title: "Tổng quan tác giả | VanThu",
 };
 
 export default async function AuthorDashboardPage() {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/login");
 
-  if (!profile.is_author) {
-    return (
-      <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-text">Trở thành tác giả</h1>
-        <p className="mt-2 text-text-muted">
-          Gửi đơn xin làm tác giả để được quản trị viên duyệt và bắt đầu đăng truyện của bạn.
-        </p>
-        <Link
-          href="/author/apply"
-          className="mt-5 inline-block rounded-lg bg-accent px-5 py-2.5 font-medium text-white hover:bg-accent-hover"
-        >
-          Gửi đơn xin làm tác giả
-        </Link>
-      </div>
-    );
-  }
-
   const supabase = await createClient();
-  const [{ novels }, stats] = await Promise.all([
-    listNovels(supabase, {
-      authorId: profile.id,
-      approvalStatus: "all",
-      sort: "updated",
-      pageSize: 100,
-    }),
-    getAuthorDashboardStats(supabase, profile.id),
+  const [overview, releaseStats, notifications, { data: wallet }] = await Promise.all([
+    getAuthorOverview(supabase, profile.id),
+    getAuthorReleaseStats(supabase, profile.id),
+    getNotifications(supabase, profile.id, 5),
+    supabase
+      .from("wallets")
+      .select("author_earned_coins")
+      .eq("user_id", profile.id)
+      .maybeSingle(),
   ]);
 
+  const viewsDelta = overview.totalViewsToday - overview.totalViewsYesterday;
+
   return (
-    <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text">Truyện của tôi</h1>
-        <Link
-          href="/author/new"
-          className="rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover"
-        >
-          + Đăng truyện mới
-        </Link>
+    <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 lg:px-8">
+      <h1 className="mb-5 text-2xl font-bold text-text">Tổng quan</h1>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          label="Lượt xem hôm nay"
+          value={formatNumber(overview.totalViewsToday)}
+          delta={viewsDelta}
+          tone="accent"
+        />
+        <StatCard
+          label="Lượt sưu tầm"
+          value={formatNumber(overview.totalLibraryCount)}
+          tone="violet"
+        />
+        <StatCard
+          label="Tổng doanh thu"
+          value={`${formatNumber(overview.totalRevenueVnd)}đ`}
+          tone="emerald"
+        />
+        <StatCard
+          label="Xu khả dụng"
+          value={formatNumber(wallet?.author_earned_coins ?? 0)}
+          tone="amber"
+        />
       </div>
 
-      {novels.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-border py-16 text-center text-text-muted">
-          Bạn chưa có truyện nào. Bấm &quot;+ Đăng truyện mới&quot; để bắt đầu.
-        </p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {novels.map((novel) => {
-            const novelStats = stats.get(novel.id);
-            return (
-            <div
-              key={novel.id}
-              className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-surface p-4"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold text-text">{novel.title}</span>
-                  <StatusBadge status={novel.status} />
-                  {novel.approval_status !== "approved" && (
-                    <ApprovalBadge status={novel.approval_status} />
-                  )}
-                </div>
-                <p className="mt-1 text-sm text-text-muted">
-                  {novel.stats.chapter_count} chương · {formatNumber(novel.views)} lượt xem ·{" "}
-                  {novel.stats.avg_rating}/5 sao · {novelStats?.commentCount ?? 0} bình luận ·{" "}
-                  {formatNumber(novelStats?.revenueVnd ?? 0)}đ doanh thu
-                </p>
-              </div>
-              <Link
-                href={`/author/${novel.id}/chapters`}
-                className="rounded-lg border border-border px-3 py-2 text-sm text-text hover:bg-surface-hover"
-              >
-                Quản lý chương
-              </Link>
-              <Link
-                href={`/author/${novel.id}/edit`}
-                className="rounded-lg border border-border px-3 py-2 text-sm text-text hover:bg-surface-hover"
-              >
-                Sửa
-              </Link>
-            </div>
-            );
-          })}
-        </div>
-      )}
+      <div className="mb-6">
+        <NovelPicker novels={overview.novels} />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="rounded-xl border border-border bg-surface p-5">
+          <h2 className="mb-4 text-sm font-semibold text-text">
+            Thống kê phát hành — chương đăng theo tháng
+          </h2>
+          <BarChart data={releaseStats} valueSuffix=" chương" />
+        </section>
+
+        <section className="rounded-xl border border-border bg-surface p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-text">Thông báo</h2>
+            <Link href="/notifications" className="text-xs text-accent hover:underline">
+              Xem tất cả
+            </Link>
+          </div>
+          {notifications.length === 0 ? (
+            <p className="py-8 text-center text-sm text-text-muted">Chưa có thông báo nào.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {notifications.map((n) => (
+                <li key={n.id}>
+                  <Link
+                    href={n.link ?? "/notifications"}
+                    className="flex items-center justify-between gap-2 py-2.5 hover:bg-surface-hover"
+                  >
+                    <span
+                      className={`truncate text-sm ${n.is_read ? "text-text-muted" : "font-medium text-text"}`}
+                    >
+                      {n.title}
+                    </span>
+                    <span className="shrink-0 text-xs text-text-muted">
+                      {formatDate(n.created_at)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

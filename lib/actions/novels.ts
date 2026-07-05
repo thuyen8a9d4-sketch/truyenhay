@@ -53,7 +53,7 @@ export async function createNovel(
     .eq("id", user.id)
     .single();
   if (!profile?.is_author) {
-    return { error: "Bạn cần bật chế độ tác giả trong Hồ sơ trước." };
+    return { error: "Bạn cần được duyệt làm tác giả trước. Gửi đơn tại trang Đơn xin làm tác giả." };
   }
 
   const title = String(formData.get("title") ?? "").trim();
@@ -92,6 +92,7 @@ export async function createNovel(
   await uploadCoverIfProvided(supabase, user.id, novel.id, formData);
 
   revalidatePath("/author");
+  revalidatePath("/author/works");
   redirect(`/author/${novel.id}/chapters/new`);
 }
 
@@ -133,6 +134,7 @@ export async function updateNovel(
   await uploadCoverIfProvided(supabase, user.id, novelId, formData);
 
   revalidatePath("/author");
+  revalidatePath("/author/works");
   revalidatePath(`/novel/${novel.slug}`);
   return { success: true };
 }
@@ -147,5 +149,6 @@ export async function deleteNovel(novelId: string) {
   await supabase.from("novels").delete().eq("id", novelId).eq("author_id", user.id);
 
   revalidatePath("/author");
-  redirect("/author");
+  revalidatePath("/author/works");
+  redirect("/author/works");
 }

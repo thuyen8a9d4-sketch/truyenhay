@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam",
@@ -40,9 +38,7 @@ export default function RootLayout({
         </Script>
       </head>
       <body className="flex min-h-full flex-col font-sans antialiased" suppressHydrationWarning>
-        <Navbar />
-        <main className="flex flex-1 flex-col">{children}</main>
-        <Footer />
+        {children}
       </body>
     </html>
   );

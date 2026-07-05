@@ -76,7 +76,7 @@ export default async function HomePage() {
           </h1>
           <p className="mx-auto mt-2 max-w-md text-text-muted">
             Nền tảng chưa có truyện nào. Hãy là người đầu tiên đăng ký tài khoản,
-            bật chế độ tác giả và đăng truyện của bạn!
+            gửi đơn làm tác giả và đăng truyện của bạn!
           </p>
           <Link
             href="/signup"

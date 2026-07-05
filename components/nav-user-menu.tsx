@@ -82,76 +82,30 @@ export function NavUserMenu({
             Nạp xu
           </Link>
           {profile.is_author ? (
-            <>
-              <Link
-                href="/author"
-                onClick={() => setOpen(false)}
-                className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
-              >
-                Trang tác giả
-              </Link>
-              <Link
-                href="/author/income"
-                onClick={() => setOpen(false)}
-                className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
-              >
-                Sao kê thu nhập
-              </Link>
-              <Link
-                href="/author/withdraw"
-                onClick={() => setOpen(false)}
-                className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
-              >
-                Rút tiền
-              </Link>
-            </>
+            <Link
+              href="/author"
+              onClick={() => setOpen(false)}
+              className="block border-t border-border px-4 py-2.5 text-sm font-medium text-text hover:bg-surface-hover"
+            >
+              ✍️ Chuyển sang Trang tác giả
+            </Link>
           ) : (
             <Link
               href="/author/apply"
               onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
+              className="block border-t border-border px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
             >
-              Đơn xin làm tác giả
+              ✍️ Đơn xin làm tác giả
             </Link>
           )}
           {profile.is_admin && (
-            <>
-              <Link
-                href="/admin/coins"
-                onClick={() => setOpen(false)}
-                className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
-              >
-                Quản trị — Cộng xu
-              </Link>
-              <Link
-                href="/admin/income"
-                onClick={() => setOpen(false)}
-                className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
-              >
-                Quản trị — Doanh thu
-              </Link>
-              <Link
-                href="/admin/authors"
-                onClick={() => setOpen(false)}
-                className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
-              >
-                Quản trị — Duyệt tác giả
-              </Link>
-              <Link
-                href="/admin/novels"
-                onClick={() => setOpen(false)}
-                className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
-              >
-                Quản trị — Duyệt truyện
-              </Link>
-              <Link
-                href="/admin/withdrawals"
-                onClick={() => setOpen(false)}
-                className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
-              >
-                Quản trị — Duyệt rút tiền
-              </Link>
-            </>
+            <Link
+              href="/admin"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm font-medium text-text hover:bg-surface-hover"
+            >
+              🛡️ Chuyển sang Trang quản trị
+            </Link>
           )}
           <form action={signOut}>
             <button

@@ -339,6 +339,12 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["user_consents"]["Insert"]>;
         Relationships: [];
       };
+      novel_view_daily: {
+        Row: { novel_id: string; day: string; views: number };
+        Insert: { novel_id: string; day: string; views?: number };
+        Update: Partial<{ novel_id: string; day: string; views: number }>;
+        Relationships: [];
+      };
       withdrawal_requests: {
         Row: {
           id: string;
@@ -384,6 +390,10 @@ export type Database = {
       };
       novel_content_stats: {
         Row: { novel_id: string; total_chars: number };
+        Relationships: [];
+      };
+      novel_library_stats: {
+        Row: { novel_id: string; library_count: number };
         Relationships: [];
       };
     };
