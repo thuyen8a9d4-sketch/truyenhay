@@ -19,7 +19,7 @@ export default async function EditChapterPage({ params }: { params: Params }) {
   const supabase = await createClient();
   const { data: novel } = await supabase
     .from("novels")
-    .select("id, slug, author_id")
+    .select("id, slug, author_id, views")
     .eq("id", novelId)
     .single();
   if (!novel) notFound();
@@ -55,6 +55,7 @@ export default async function EditChapterPage({ params }: { params: Params }) {
             priceCoins: chapter.price_coins,
           }}
           submitLabel="Lưu thay đổi"
+          novelViews={novel.views}
         />
       </div>
     </div>

@@ -60,18 +60,28 @@ export async function createNovel(
   const synopsis = String(formData.get("synopsis") ?? "").trim();
   const status = String(formData.get("status") ?? "ongoing") as NovelStatus;
   const genreIds = parseGenreIds(formData);
+  const agreeContract = formData.get("agreeContract") === "on";
 
   if (!title) return { error: "Vui lòng nhập tên truyện." };
+  if (!agreeContract) {
+    return { error: "Bạn cần đồng ý với Hợp đồng điện tử trước khi đăng truyện." };
+  }
 
   const slug = `${slugify(title)}-${Math.random().toString(36).slice(2, 7)}`;
 
   const { data: novel, error } = await supabase
     .from("novels")
-    .insert({ author_id: user.id, title, slug, synopsis, status })
+    .insert({ author_id: user.id, title, slug, synopsis, status, approval_status: "pending" })
     .select("id, slug")
     .single();
 
   if (error || !novel) return { error: "Không thể tạo truyện. Vui lòng thử lại." };
+
+  await supabase.from("user_consents").insert({
+    user_id: user.id,
+    consent_type: "author_publishing_contract",
+    novel_id: novel.id,
+  });
 
   if (genreIds.length > 0) {
     await supabase

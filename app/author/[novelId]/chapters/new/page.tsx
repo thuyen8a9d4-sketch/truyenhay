@@ -20,7 +20,7 @@ export default async function NewChapterPage({ params }: { params: Params }) {
   const supabase = await createClient();
   const { data: novel } = await supabase
     .from("novels")
-    .select("id, title, slug, author_id")
+    .select("id, title, slug, author_id, views")
     .eq("id", novelId)
     .single();
   if (!novel) notFound();
@@ -41,6 +41,7 @@ export default async function NewChapterPage({ params }: { params: Params }) {
           action={action}
           initial={{ chapterNumber: nextNumber, title: "", content: "" }}
           submitLabel="Đăng chương"
+          novelViews={novel.views}
         />
       </div>
     </div>

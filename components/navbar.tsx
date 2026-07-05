@@ -4,8 +4,9 @@ import { getCurrentProfile } from "@/lib/auth";
 import { NavSearch } from "@/components/nav-search";
 import { NavGenreMenu } from "@/components/nav-genre-menu";
 import { NavUserMenu } from "@/components/nav-user-menu";
+import { NotificationBell } from "@/components/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getWallet } from "@/lib/queries";
+import { getNotifications, getUnreadNotificationCount, getWallet } from "@/lib/queries";
 
 export async function Navbar() {
   const supabase = await createClient();
@@ -14,7 +15,13 @@ export async function Navbar() {
     getCurrentProfile(),
   ]);
 
-  const coinBalance = profile ? await getWallet(supabase, profile.id) : 0;
+  const [coinBalance, notifications, unreadCount] = profile
+    ? await Promise.all([
+        getWallet(supabase, profile.id),
+        getNotifications(supabase, profile.id, 8),
+        getUnreadNotificationCount(supabase, profile.id),
+      ])
+    : [0, [], 0];
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-bg/95 backdrop-blur">
@@ -44,7 +51,14 @@ export async function Navbar() {
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <ThemeToggle />
           {profile ? (
-            <NavUserMenu profile={profile} coinBalance={coinBalance} />
+            <>
+              <NotificationBell
+                notifications={notifications}
+                unreadCount={unreadCount}
+                userId={profile.id}
+              />
+              <NavUserMenu profile={profile} coinBalance={coinBalance} />
+            </>
           ) : (
             <>
               <Link

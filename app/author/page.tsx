@@ -3,9 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { listNovels } from "@/lib/queries";
+import { getAuthorDashboardStats, listNovels } from "@/lib/queries";
 import { formatNumber } from "@/lib/utils";
 import { StatusBadge } from "@/components/status-badge";
+import { ApprovalBadge } from "@/components/approval-badge";
 
 export const metadata: Metadata = {
   title: "Trang tác giả | VanThu",
@@ -20,24 +21,28 @@ export default async function AuthorDashboardPage() {
       <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-16 text-center">
         <h1 className="text-2xl font-bold text-text">Trở thành tác giả</h1>
         <p className="mt-2 text-text-muted">
-          Bật chế độ tác giả trong Hồ sơ để bắt đầu đăng truyện của bạn.
+          Gửi đơn xin làm tác giả để được quản trị viên duyệt và bắt đầu đăng truyện của bạn.
         </p>
         <Link
-          href="/profile"
+          href="/author/apply"
           className="mt-5 inline-block rounded-lg bg-accent px-5 py-2.5 font-medium text-white hover:bg-accent-hover"
         >
-          Đi tới Hồ sơ
+          Gửi đơn xin làm tác giả
         </Link>
       </div>
     );
   }
 
   const supabase = await createClient();
-  const { novels } = await listNovels(supabase, {
-    authorId: profile.id,
-    sort: "updated",
-    pageSize: 100,
-  });
+  const [{ novels }, stats] = await Promise.all([
+    listNovels(supabase, {
+      authorId: profile.id,
+      approvalStatus: "all",
+      sort: "updated",
+      pageSize: 100,
+    }),
+    getAuthorDashboardStats(supabase, profile.id),
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
@@ -57,19 +62,25 @@ export default async function AuthorDashboardPage() {
         </p>
       ) : (
         <div className="flex flex-col gap-3">
-          {novels.map((novel) => (
+          {novels.map((novel) => {
+            const novelStats = stats.get(novel.id);
+            return (
             <div
               key={novel.id}
               className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-surface p-4"
             >
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-text">{novel.title}</span>
                   <StatusBadge status={novel.status} />
+                  {novel.approval_status !== "approved" && (
+                    <ApprovalBadge status={novel.approval_status} />
+                  )}
                 </div>
                 <p className="mt-1 text-sm text-text-muted">
                   {novel.stats.chapter_count} chương · {formatNumber(novel.views)} lượt xem ·{" "}
-                  {novel.stats.avg_rating}/5 sao
+                  {novel.stats.avg_rating}/5 sao · {novelStats?.commentCount ?? 0} bình luận ·{" "}
+                  {formatNumber(novelStats?.revenueVnd ?? 0)}đ doanh thu
                 </p>
               </div>
               <Link
@@ -85,7 +96,8 @@ export default async function AuthorDashboardPage() {
                 Sửa
               </Link>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

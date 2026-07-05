@@ -39,6 +39,7 @@ export async function createChapter(
 
   if (error || !chapter) {
     if (error?.code === "23505") return { error: `Chương số ${chapterNumber} đã tồn tại.` };
+    if (error?.code === "P0001") return { error: error.message };
     return { error: "Không thể tạo chương. Vui lòng thử lại." };
   }
 
@@ -87,6 +88,7 @@ export async function updateChapter(
 
   if (error) {
     if (error.code === "23505") return { error: `Chương số ${chapterNumber} đã tồn tại.` };
+    if (error.code === "P0001") return { error: error.message };
     return { error: "Không thể cập nhật chương." };
   }
 

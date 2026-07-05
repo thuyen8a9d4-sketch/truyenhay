@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { updateProfile, type ProfileState } from "@/lib/actions/profile";
 import type { Profile } from "@/lib/database.types";
 
@@ -8,13 +8,15 @@ const initialState: ProfileState = undefined;
 
 export function ProfileForm({ profile }: { profile: Profile }) {
   const [state, action, pending] = useActionState(updateProfile, initialState);
-  const [isAuthor, setIsAuthor] = useState(profile.is_author);
 
   return (
     <form action={action} className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm text-text-muted">Tên đăng nhập</label>
+        <label htmlFor="username" className="text-sm text-text-muted">
+          Tên đăng nhập
+        </label>
         <input
+          id="username"
           disabled
           value={profile.username}
           className="rounded-lg border border-border bg-surface/50 px-3.5 py-2.5 text-text-muted"
@@ -47,19 +49,6 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           placeholder="Đôi nét về bạn..."
         />
       </div>
-
-      <label className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3.5 py-3">
-        <input
-          type="checkbox"
-          name="isAuthor"
-          checked={isAuthor}
-          onChange={(e) => setIsAuthor(e.target.checked)}
-          className="h-4 w-4 accent-[var(--accent)]"
-        />
-        <span className="text-sm text-text">
-          Tôi muốn trở thành <strong>tác giả</strong> để đăng truyện của mình
-        </span>
-      </label>
 
       {state?.error && <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>}
       {state?.success && (

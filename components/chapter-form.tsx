@@ -1,12 +1,18 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import {
+  CHAPTER_PRICE_CAP_ESTABLISHED,
+  CHAPTER_PRICE_CAP_NEW,
+  CHAPTER_PRICE_CAP_VIEWS_THRESHOLD,
+} from "@/lib/database.types";
 import type { ChapterFormState } from "@/lib/actions/chapters";
 
 export function ChapterForm({
   action,
   initial,
   submitLabel,
+  novelViews = 0,
 }: {
   action: (state: ChapterFormState, formData: FormData) => Promise<ChapterFormState>;
   initial?: {
@@ -17,12 +23,17 @@ export function ChapterForm({
     priceCoins?: number;
   };
   submitLabel: string;
+  novelViews?: number;
 }) {
   const [state, formAction, pending] = useActionState<ChapterFormState, FormData>(
     action,
     undefined,
   );
   const [isLocked, setIsLocked] = useState(initial?.isLocked ?? false);
+  const priceCap =
+    novelViews > CHAPTER_PRICE_CAP_VIEWS_THRESHOLD
+      ? CHAPTER_PRICE_CAP_ESTABLISHED
+      : CHAPTER_PRICE_CAP_NEW;
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
@@ -93,11 +104,16 @@ export function ChapterForm({
               type="number"
               name="priceCoins"
               min={1}
-              defaultValue={initial?.priceCoins || 10}
+              max={priceCap}
+              defaultValue={initial?.priceCoins || Math.min(10, priceCap)}
               className="w-32 rounded-lg border border-border bg-bg px-3.5 py-2.5 text-text outline-none focus:border-accent"
             />
             <p className="text-xs text-text-muted">
-              Bạn nhận 60% giá trị, nền tảng giữ 40%. Xem chi tiết ở trang Sao kê thu nhập.
+              Tối đa {priceCap} xu/chương ở mức truyện hiện tại (
+              {novelViews > CHAPTER_PRICE_CAP_VIEWS_THRESHOLD
+                ? "đã đạt trên 10.000 lượt xem"
+                : "chưa đạt 10.000 lượt xem"}
+              ). Bạn nhận 60% giá trị, nền tảng giữ 40%. Xem chi tiết ở trang Sao kê thu nhập.
             </p>
           </div>
         )}

@@ -1,4 +1,7 @@
 export type NovelStatus = "ongoing" | "completed" | "hiatus";
+export type NovelApprovalStatus = "pending" | "approved" | "rejected";
+export type ReviewStatus = "pending" | "approved" | "rejected";
+export type WithdrawalStatus = "pending" | "approved" | "paid" | "rejected";
 
 export type Database = {
   public: {
@@ -43,6 +46,10 @@ export type Database = {
           synopsis: string;
           status: NovelStatus;
           views: number;
+          approval_status: NovelApprovalStatus;
+          reject_reason: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -55,6 +62,10 @@ export type Database = {
           synopsis: string;
           status?: NovelStatus;
           views?: number;
+          approval_status?: NovelApprovalStatus;
+          reject_reason?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -137,10 +148,16 @@ export type Database = {
         ];
       };
       wallets: {
-        Row: { user_id: string; coin_balance: number; updated_at: string };
+        Row: {
+          user_id: string;
+          coin_balance: number;
+          author_earned_coins: number;
+          updated_at: string;
+        };
         Insert: {
           user_id: string;
           coin_balance?: number;
+          author_earned_coins?: number;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["wallets"]["Insert"]>;
@@ -256,6 +273,104 @@ export type Database = {
           },
         ];
       };
+      author_applications: {
+        Row: {
+          id: string;
+          user_id: string;
+          message: string;
+          status: ReviewStatus;
+          reject_reason: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          message?: string;
+          status?: ReviewStatus;
+          reject_reason?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["author_applications"]["Insert"]>;
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          title: string;
+          body: string | null;
+          link: string | null;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: string;
+          title: string;
+          body?: string | null;
+          link?: string | null;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["notifications"]["Insert"]>;
+        Relationships: [];
+      };
+      user_consents: {
+        Row: {
+          id: string;
+          user_id: string;
+          consent_type: string;
+          novel_id: string | null;
+          accepted_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          consent_type: string;
+          novel_id?: string | null;
+          accepted_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_consents"]["Insert"]>;
+        Relationships: [];
+      };
+      withdrawal_requests: {
+        Row: {
+          id: string;
+          author_id: string;
+          coins: number;
+          amount_vnd: number;
+          bank_name: string;
+          bank_account_number: string;
+          bank_account_holder: string;
+          status: WithdrawalStatus;
+          reject_reason: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          author_id: string;
+          coins: number;
+          amount_vnd: number;
+          bank_name: string;
+          bank_account_number: string;
+          bank_account_holder: string;
+          status?: WithdrawalStatus;
+          reject_reason?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["withdrawal_requests"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: {
       novel_stats: {
@@ -265,6 +380,10 @@ export type Database = {
           rating_count: number;
           chapter_count: number;
         };
+        Relationships: [];
+      };
+      novel_content_stats: {
+        Row: { novel_id: string; total_chars: number };
         Relationships: [];
       };
     };
@@ -290,6 +409,27 @@ export type Database = {
         };
         Returns: undefined;
       };
+      request_withdrawal: {
+        Args: {
+          p_coins: number;
+          p_bank_name: string;
+          p_bank_account_number: string;
+          p_bank_account_holder: string;
+        };
+        Returns: { success: boolean; message: string }[];
+      };
+      admin_review_withdrawal: {
+        Args: { p_request_id: string; p_decision: string; p_reason: string | null };
+        Returns: undefined;
+      };
+      admin_review_author_application: {
+        Args: { p_application_id: string; p_approve: boolean; p_reason: string | null };
+        Returns: undefined;
+      };
+      admin_review_novel: {
+        Args: { p_novel_id: string; p_approve: boolean; p_reason: string | null };
+        Returns: undefined;
+      };
     };
   };
 };
@@ -306,14 +446,26 @@ export type Wallet = Database["public"]["Tables"]["wallets"]["Row"];
 export type CoinPurchase = Database["public"]["Tables"]["coin_purchases"]["Row"];
 export type ChapterUnlock = Database["public"]["Tables"]["chapter_unlocks"]["Row"];
 export type ChapterContent = Database["public"]["Tables"]["chapter_contents"]["Row"];
+export type AuthorApplication = Database["public"]["Tables"]["author_applications"]["Row"];
+export type Notification = Database["public"]["Tables"]["notifications"]["Row"];
+export type UserConsent = Database["public"]["Tables"]["user_consents"]["Row"];
+export type WithdrawalRequest = Database["public"]["Tables"]["withdrawal_requests"]["Row"];
+export type NovelContentStats = Database["public"]["Views"]["novel_content_stats"]["Row"];
 
-export const COIN_VALUE_VND = 200;
+export const COIN_VALUE_VND = 1000;
 export const AUTHOR_SHARE = 0.6;
 export const PLATFORM_SHARE = 0.4;
 
+export const CHAPTER_PRICE_CAP_NEW = 10;
+export const CHAPTER_PRICE_CAP_ESTABLISHED = 100;
+export const CHAPTER_PRICE_CAP_VIEWS_THRESHOLD = 10_000;
+
+export const WITHDRAWAL_MIN_VIEWS = 2000;
+export const WITHDRAWAL_MIN_CHARS = 20_000;
+
 export const COIN_PACKAGES = [
-  { coins: 100, priceVnd: 20_000 },
-  { coins: 300, priceVnd: 55_000 },
-  { coins: 700, priceVnd: 120_000 },
-  { coins: 1500, priceVnd: 240_000 },
+  { coins: 100, priceVnd: 100_000 },
+  { coins: 300, priceVnd: 300_000 },
+  { coins: 700, priceVnd: 700_000 },
+  { coins: 1500, priceVnd: 1_500_000 },
 ] as const;

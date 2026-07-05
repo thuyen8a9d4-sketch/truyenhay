@@ -20,14 +20,12 @@ export async function updateProfile(
 
   const displayName = String(formData.get("displayName") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
-  const isAuthor = formData.get("isAuthor") === "on";
 
   const { error } = await supabase
     .from("profiles")
     .update({
       display_name: displayName || null,
       bio: bio || null,
-      is_author: isAuthor,
     })
     .eq("id", user.id);
 

@@ -1,6 +1,6 @@
 # VanThu
 
-Nền tảng đọc & đăng tiểu thuyết online, miễn phí, lấy cảm hứng từ giao diện/chức năng của [webnovel.com](https://www.webnovel.com/vi). Bất kỳ ai cũng có thể đăng ký tài khoản, bật chế độ **tác giả** và đăng truyện/chương của riêng mình.
+Nền tảng đọc & đăng tiểu thuyết online, miễn phí, lấy cảm hứng từ giao diện/chức năng của [webnovel.com](https://www.webnovel.com/vi). Bất kỳ ai cũng có thể đăng ký tài khoản, gửi đơn xin làm **tác giả** (cần admin duyệt) và đăng truyện/chương của riêng mình sau khi truyện được duyệt.
 
 ## Công nghệ
 
@@ -19,7 +19,11 @@ Toàn bộ ngăn xếp đều có gói miễn phí, phù hợp để tự host m
 - Thư viện cá nhân: theo dõi truyện đã lưu + tiến độ đọc
 - Bảng xếp hạng theo lượt xem / đánh giá / mới nhất
 - Trang tác giả: tạo/sửa/xoá truyện, quản lý chương, tải ảnh bìa
-- **Hệ thống xu & khoá chương trả phí**: tác giả có thể khoá chương và đặt giá xu; độc giả trả xu để mở khoá. Doanh thu chia tự động 60% tác giả / 40% nền tảng.
+- **Phân quyền 3 vai trò (Reader/Author/Admin)**: đăng ký tự do ở vai Reader; xin làm Author qua **Đơn xin làm tác giả** cần Admin duyệt; Admin được cấp thủ công qua SQL. Không thể tự nâng quyền qua API (chặn ở tầng database).
+- **Duyệt truyện**: mọi truyện mới phải được Admin duyệt ở trang **Quản trị — Duyệt truyện** mới hiển thị công khai; tác giả phải đồng ý Hợp đồng điện tử trước khi đăng.
+- **Hệ thống xu & khoá chương trả phí**: tác giả có thể khoá chương và đặt giá xu (giới hạn tối đa 10 xu/chương cho truyện mới, 100 xu/chương sau khi đạt 10.000 lượt xem — chặn ở tầng database); độc giả trả xu để mở khoá. Doanh thu chia tự động 60% tác giả / 40% nền tảng, tỉ giá 1 xu = 1.000đ.
+- **Rút tiền**: tác giả có truyện đạt tối thiểu 2.000 lượt xem và 20.000 chữ có thể gửi yêu cầu rút tiền; Admin xử lý thủ công ở trang **Quản trị — Duyệt rút tiền**.
+- **Thông báo hệ thống**: chuông thông báo trong navbar báo kết quả duyệt đơn/truyện/rút tiền.
 - **Trang Nạp xu** (thủ công qua chuyển khoản + admin xác nhận, chưa kết nối cổng thanh toán thật) và **Sao kê thu nhập** cho tác giả/admin để tự khai thuế (xem thêm ở [DEPLOY.md](./DEPLOY.md))
 
 ## Chạy dự án ở máy local

@@ -81,7 +81,7 @@ export function NavUserMenu({
           >
             Nạp xu
           </Link>
-          {profile.is_author && (
+          {profile.is_author ? (
             <>
               <Link
                 href="/author"
@@ -97,7 +97,22 @@ export function NavUserMenu({
               >
                 Sao kê thu nhập
               </Link>
+              <Link
+                href="/author/withdraw"
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
+              >
+                Rút tiền
+              </Link>
             </>
+          ) : (
+            <Link
+              href="/author/apply"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
+            >
+              Đơn xin làm tác giả
+            </Link>
           )}
           {profile.is_admin && (
             <>
@@ -114,6 +129,27 @@ export function NavUserMenu({
                 className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
               >
                 Quản trị — Doanh thu
+              </Link>
+              <Link
+                href="/admin/authors"
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
+              >
+                Quản trị — Duyệt tác giả
+              </Link>
+              <Link
+                href="/admin/novels"
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
+              >
+                Quản trị — Duyệt truyện
+              </Link>
+              <Link
+                href="/admin/withdrawals"
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2.5 text-sm text-text hover:bg-surface-hover"
+              >
+                Quản trị — Duyệt rút tiền
               </Link>
             </>
           )}

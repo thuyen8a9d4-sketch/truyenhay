@@ -13,6 +13,7 @@ type NovelBase = Pick<
   | "synopsis"
   | "status"
   | "views"
+  | "approval_status"
   | "created_at"
   | "updated_at"
 >;
@@ -24,7 +25,7 @@ export type NovelCardData = NovelBase & {
 };
 
 const NOVEL_COLUMNS =
-  "id,author_id,title,slug,cover_url,synopsis,status,views,created_at,updated_at";
+  "id,author_id,title,slug,cover_url,synopsis,status,views,approval_status,created_at,updated_at";
 
 export async function attachNovelCardData(
   supabase: SB,
@@ -82,6 +83,9 @@ export type ListNovelsOptions = {
   page?: number;
   pageSize?: number;
   authorId?: string;
+  /** Mặc định "approved" cho các trang công khai. Trang dashboard tác giả
+   * truyền "all" (kèm authorId) để tác giả thấy cả truyện đang chờ/bị từ chối. */
+  approvalStatus?: "approved" | "all";
 };
 
 export async function listNovels(supabase: SB, opts: ListNovelsOptions) {
@@ -115,6 +119,7 @@ export async function listNovels(supabase: SB, opts: ListNovelsOptions) {
   if (opts.authorId) query = query.eq("author_id", opts.authorId);
   if (genreNovelIds) query = query.in("id", genreNovelIds);
   if (opts.search) query = query.ilike("title", `%${opts.search}%`);
+  if (opts.approvalStatus !== "all") query = query.eq("approval_status", "approved");
 
   if (opts.sort === "newest") {
     query = query.order("created_at", { ascending: false });
@@ -155,6 +160,7 @@ export async function getRankings(
     const { data: novelRows } = await supabase
       .from("novels")
       .select(NOVEL_COLUMNS)
+      .eq("approval_status", "approved")
       .in("id", ids);
 
     const orderMap = new Map(ids.map((id, idx) => [id, idx]));
@@ -537,4 +543,250 @@ export async function getLibrary(supabase: SB, userId: string): Promise<LibraryI
       };
     })
     .filter((x): x is LibraryItem => x !== null);
+}
+
+export type PendingNovelItem = {
+  id: string;
+  title: string;
+  slug: string;
+  synopsis: string;
+  created_at: string;
+  author: { username: string; display_name: string | null } | null;
+};
+
+export async function getPendingNovels(supabase: SB): Promise<PendingNovelItem[]> {
+  const { data } = await supabase
+    .from("novels")
+    .select("id, title, slug, synopsis, author_id, created_at")
+    .eq("approval_status", "pending")
+    .order("created_at", { ascending: true });
+
+  const rows = data ?? [];
+  if (rows.length === 0) return [];
+
+  const authorIds = Array.from(new Set(rows.map((r) => r.author_id)));
+  const { data: authors } = await supabase
+    .from("profiles")
+    .select("id, username, display_name")
+    .in("id", authorIds);
+  const authorMap = new Map((authors ?? []).map((a) => [a.id, a]));
+
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    slug: r.slug,
+    synopsis: r.synopsis,
+    created_at: r.created_at,
+    author: authorMap.get(r.author_id) ?? null,
+  }));
+}
+
+export type PendingAuthorApplicationItem = {
+  id: string;
+  message: string;
+  created_at: string;
+  applicant: { username: string; display_name: string | null } | null;
+};
+
+export async function getPendingAuthorApplications(
+  supabase: SB,
+): Promise<PendingAuthorApplicationItem[]> {
+  const { data } = await supabase
+    .from("author_applications")
+    .select("id, user_id, message, created_at")
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+
+  const rows = data ?? [];
+  if (rows.length === 0) return [];
+
+  const userIds = Array.from(new Set(rows.map((r) => r.user_id)));
+  const { data: users } = await supabase
+    .from("profiles")
+    .select("id, username, display_name")
+    .in("id", userIds);
+  const userMap = new Map((users ?? []).map((u) => [u.id, u]));
+
+  return rows.map((r) => ({
+    id: r.id,
+    message: r.message,
+    created_at: r.created_at,
+    applicant: userMap.get(r.user_id) ?? null,
+  }));
+}
+
+export async function getAuthorApplicationStatus(supabase: SB, userId: string) {
+  const { data } = await supabase
+    .from("author_applications")
+    .select("id, status, reject_reason, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data;
+}
+
+export type PendingWithdrawalItem = {
+  id: string;
+  coins: number;
+  amount_vnd: number;
+  bank_name: string;
+  bank_account_number: string;
+  bank_account_holder: string;
+  created_at: string;
+  author: { username: string; display_name: string | null } | null;
+};
+
+export async function getPendingWithdrawals(supabase: SB): Promise<PendingWithdrawalItem[]> {
+  const { data } = await supabase
+    .from("withdrawal_requests")
+    .select(
+      "id, author_id, coins, amount_vnd, bank_name, bank_account_number, bank_account_holder, created_at",
+    )
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+
+  const rows = data ?? [];
+  if (rows.length === 0) return [];
+
+  const authorIds = Array.from(new Set(rows.map((r) => r.author_id)));
+  const { data: authors } = await supabase
+    .from("profiles")
+    .select("id, username, display_name")
+    .in("id", authorIds);
+  const authorMap = new Map((authors ?? []).map((a) => [a.id, a]));
+
+  return rows.map((r) => ({
+    id: r.id,
+    coins: r.coins,
+    amount_vnd: Number(r.amount_vnd),
+    bank_name: r.bank_name,
+    bank_account_number: r.bank_account_number,
+    bank_account_holder: r.bank_account_holder,
+    created_at: r.created_at,
+    author: authorMap.get(r.author_id) ?? null,
+  }));
+}
+
+export async function getWithdrawalHistory(supabase: SB, authorId: string) {
+  const { data } = await supabase
+    .from("withdrawal_requests")
+    .select("id, coins, amount_vnd, status, reject_reason, created_at")
+    .eq("author_id", authorId)
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
+export async function getNotifications(supabase: SB, userId: string, limit = 20) {
+  const { data } = await supabase
+    .from("notifications")
+    .select("id, user_id, type, title, body, link, is_read, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return data ?? [];
+}
+
+export async function getUnreadNotificationCount(supabase: SB, userId: string): Promise<number> {
+  const { count } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("is_read", false);
+  return count ?? 0;
+}
+
+export type AuthorNovelEligibility = {
+  id: string;
+  title: string;
+  views: number;
+  totalChars: number;
+  eligible: boolean;
+};
+
+export async function getAuthorNovelEligibility(
+  supabase: SB,
+  authorId: string,
+): Promise<AuthorNovelEligibility[]> {
+  const { data: novels } = await supabase
+    .from("novels")
+    .select("id, title, views")
+    .eq("author_id", authorId)
+    .eq("approval_status", "approved");
+
+  const rows = novels ?? [];
+  if (rows.length === 0) return [];
+
+  const { data: statsRows } = await supabase
+    .from("novel_content_stats")
+    .select("novel_id, total_chars")
+    .in(
+      "novel_id",
+      rows.map((n) => n.id),
+    );
+  const statsMap = new Map((statsRows ?? []).map((s) => [s.novel_id, s.total_chars]));
+
+  return rows.map((n) => {
+    const totalChars = statsMap.get(n.id) ?? 0;
+    return {
+      id: n.id,
+      title: n.title,
+      views: n.views,
+      totalChars,
+      eligible: n.views >= 2000 && totalChars >= 20000,
+    };
+  });
+}
+
+export type AuthorDashboardStat = {
+  novelId: string;
+  revenueVnd: number;
+  commentCount: number;
+};
+
+export async function getAuthorDashboardStats(
+  supabase: SB,
+  authorId: string,
+): Promise<Map<string, AuthorDashboardStat>> {
+  const { data: novels } = await supabase
+    .from("novels")
+    .select("id")
+    .eq("author_id", authorId);
+  const novelIds = (novels ?? []).map((n) => n.id);
+  const result = new Map<string, AuthorDashboardStat>();
+  if (novelIds.length === 0) return result;
+
+  for (const id of novelIds) {
+    result.set(id, { novelId: id, revenueVnd: 0, commentCount: 0 });
+  }
+
+  const { data: unlocks } = await supabase
+    .from("chapter_unlocks")
+    .select("novel_id, author_earning_vnd")
+    .in("novel_id", novelIds);
+  for (const u of unlocks ?? []) {
+    const entry = result.get(u.novel_id);
+    if (entry) entry.revenueVnd += Number(u.author_earning_vnd);
+  }
+
+  const { data: chapterRows } = await supabase
+    .from("chapters")
+    .select("id, novel_id")
+    .in("novel_id", novelIds);
+  const chapterToNovel = new Map((chapterRows ?? []).map((c) => [c.id, c.novel_id]));
+  const chapterIds = (chapterRows ?? []).map((c) => c.id);
+
+  if (chapterIds.length > 0) {
+    const { data: comments } = await supabase
+      .from("comments")
+      .select("chapter_id")
+      .in("chapter_id", chapterIds);
+    for (const c of comments ?? []) {
+      const novelId = chapterToNovel.get(c.chapter_id);
+      const entry = novelId ? result.get(novelId) : undefined;
+      if (entry) entry.commentCount += 1;
+    }
+  }
+
+  return result;
 }

@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/auth";
 import {
   getChapterList,
   getNovelDetail,
@@ -10,6 +11,7 @@ import {
   getUserRating,
 } from "@/lib/queries";
 import { StatusBadge } from "@/components/status-badge";
+import { ApprovalBadge } from "@/components/approval-badge";
 import { RatingStars } from "@/components/rating-stars";
 import { LibraryButton } from "@/components/library-button";
 import { ChapterList } from "@/components/chapter-list";
@@ -41,6 +43,7 @@ export default async function NovelDetailPage({ params }: { params: Params }) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const viewerProfile = user ? await getCurrentProfile() : null;
 
   const [chapters, reviews, libraryEntry, userRating] = await Promise.all([
     getChapterList(supabase, novel.id, user?.id),
@@ -58,6 +61,7 @@ export default async function NovelDetailPage({ params }: { params: Params }) {
   ]);
 
   const isOwner = user?.id === novel.author_id;
+  const canSeeApprovalStatus = isOwner || !!viewerProfile?.is_admin;
   const firstChapter = chapters[0];
   const continueChapter = libraryEntry?.last_read_chapter_id
     ? chapters.find((c) => c.id === libraryEntry.last_read_chapter_id)
@@ -142,6 +146,9 @@ export default async function NovelDetailPage({ params }: { params: Params }) {
 
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={novel.status} />
+            {canSeeApprovalStatus && novel.approval_status !== "approved" && (
+              <ApprovalBadge status={novel.approval_status} />
+            )}
             <RatingStars rating={novel.stats.avg_rating} size={16} />
             {novel.genres.map((g) => (
               <Link
@@ -157,6 +164,12 @@ export default async function NovelDetailPage({ params }: { params: Params }) {
           <p className="whitespace-pre-line text-sm leading-relaxed text-text-muted">
             {novel.synopsis || "Chưa có mô tả cho truyện này."}
           </p>
+
+          {canSeeApprovalStatus && novel.approval_status === "rejected" && novel.reject_reason && (
+            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400">
+              Lý do bị từ chối: {novel.reject_reason}
+            </p>
+          )}
         </div>
       </div>
 

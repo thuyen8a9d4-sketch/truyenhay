@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import type { Genre, NovelStatus } from "@/lib/database.types";
 import type { NovelFormState } from "@/lib/actions/novels";
 
@@ -103,6 +104,24 @@ export function NovelForm({
           className="text-sm text-text file:mr-3 file:rounded-lg file:border-0 file:bg-surface-hover file:px-3 file:py-1.5 file:text-text"
         />
       </div>
+
+      {!initial && (
+        <label className="flex items-start gap-3 rounded-lg border border-border bg-surface px-3.5 py-3">
+          <input
+            type="checkbox"
+            name="agreeContract"
+            required
+            className="mt-0.5 h-4 w-4 accent-[var(--accent)]"
+          />
+          <span className="text-sm text-text">
+            Tôi đã đọc và đồng ý với{" "}
+            <Link href="/legal/hop-dong-tac-gia" target="_blank" className="text-accent hover:underline">
+              Hợp đồng điện tử dành cho tác giả
+            </Link>
+            . Truyện sẽ hiển thị công khai sau khi quản trị viên duyệt.
+          </span>
+        </label>
+      )}
 
       {state?.error && <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>}
       {state?.success && (
